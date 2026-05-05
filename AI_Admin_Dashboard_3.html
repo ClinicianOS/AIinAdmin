@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Rx — Admin Suite</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+  :root {
+    --bg:       #F2EBE0;
+    --bg2:      #EAE1D4;
+    --surface:  #FFFFFF;
+    --green:    #1C3828;
+    --green2:   #2A5240;
+    --green-lt: #E8F0EB;
+    --green-md: #3D6B52;
+    --text:     #0D2B1F;
+    --text2:    #4A6358;
+    --text3:    #8FA99B;
+    --border:   rgba(13,43,31,0.1);
+    --shadow:   0 2px 16px rgba(13,43,31,0.08), 0 1px 4px rgba(13,43,31,0.05);
+    --shadow-lg:0 10px 36px rgba(13,43,31,0.14), 0 2px 8px rgba(13,43,31,0.07);
+    --r:        20px;
+    --r-sm:     12px;
+  }
+
+  html, body { width:100%; height:100%; overflow:hidden; }
+
+  body {
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* grain */
+  body::before {
+    content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opacity:1;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23g)' opacity='0.028'/%3E%3C/svg%3E");
+    background-size:300px;
+  }
+
+  .shell {
+    position:relative;z-index:1;
+    display:flex;flex-direction:column;
+    height:100vh;
+    padding-bottom:16px;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    background:var(--green);
+    padding:13px 28px;
+    display:flex;align-items:center;justify-content:space-between;
+    flex-shrink:0;
+  }
+  .logo-row { display:flex;align-items:center;gap:12px; }
+  .logo-icon {
+    width:36px;height:36px;border-radius:9px;
+    background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);
+    display:flex;align-items:center;justify-content:center;
+    font-size:14px;font-weight:700;color:#fff;letter-spacing:-0.02em;
+  }
+  .logo-text h1 { font-size:17px;font-weight:800;color:#fff;letter-spacing:-0.02em; }
+  .logo-text p  { font-size:10px;color:rgba(255,255,255,0.5);margin-top:1px;letter-spacing:0.05em; }
+  .header-right { display:flex;align-items:center;gap:10px; }
+  .pill {
+    border-radius:30px;padding:4px 12px;
+    font-size:10px;font-weight:600;letter-spacing:0.06em;
+  }
+  .pill-ghost { background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.55); }
+  .pill-live  { background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.22);color:rgba(255,255,255,0.85);display:flex;align-items:center;gap:5px; }
+  .live-dot { width:6px;height:6px;border-radius:50%;background:#6EE7A0;animation:blink 1.6s ease-in-out infinite; }
+  @keyframes blink{0%,100%{opacity:1;}50%{opacity:0.15;}}
+
+  /* ── TITLE ROW ── */
+  .title-row {
+    padding:13px 28px 0;
+    display:flex;align-items:center;justify-content:space-between;
+    opacity:0;transform:translateY(7px);
+    animation:fadeUp 0.45s ease 0.12s forwards;
+  }
+  .title-row h2 { font-size:clamp(18px,2vw,24px);font-weight:800;letter-spacing:-0.03em; }
+  .title-row p  { font-size:12px;font-weight:500;color:var(--text3); }
+
+  /* ── GRID ── */
+  .grid {
+    display:grid;grid-template-columns:repeat(5,1fr);
+    gap:13px;padding:12px 28px 0;
+    flex:1;min-height:0;
+  }
+
+  .card {
+    background:var(--surface);
+    border-radius:var(--r);
+    border:1.5px solid var(--border);
+    box-shadow:var(--shadow);
+    padding:20px 18px 16px;
+    display:flex;flex-direction:column;gap:12px;
+    cursor:pointer;position:relative;overflow:hidden;
+    transition:transform 0.32s cubic-bezier(.34,1.46,.64,1),
+               box-shadow 0.28s ease,border-color 0.22s ease;
+    opacity:0;transform:translateY(22px) scale(0.97);
+    will-change:transform;
+  }
+  .card.in { animation:cardIn 0.55s cubic-bezier(.34,1.15,.64,1) forwards; }
+  @keyframes cardIn { to{opacity:1;transform:translateY(0) scale(1);} }
+
+  .card:hover {
+    transform:translateY(-6px) scale(1.018);
+    box-shadow:var(--shadow-lg);
+    border-color:var(--ca);
+  }
+  .card:active { transform:scale(0.975) !important; }
+
+  /* accent top bar */
+  .card-bar {
+    position:absolute;top:0;left:0;right:0;height:3.5px;
+    border-radius:var(--r) var(--r) 0 0;
+    background:linear-gradient(90deg,var(--ca),var(--ca2,var(--ca)));
+    opacity:0;transition:opacity 0.22s;
+  }
+  .card:hover .card-bar { opacity:1; }
+
+  /* shimmer */
+  .card::after {
+    content:'';position:absolute;inset:0;border-radius:var(--r);
+    background:linear-gradient(110deg,transparent 35%,rgba(255,255,255,0.6) 50%,transparent 65%);
+    transform:translateX(-120%);pointer-events:none;transition:none;
+  }
+  .card:hover::after { transform:translateX(130%);transition:transform 0.52s ease; }
+
+  /* num badge */
+  .card-num {
+    position:absolute;top:13px;right:14px;
+    width:22px;height:22px;border-radius:50%;
+    background:var(--bg2);
+    display:flex;align-items:center;justify-content:center;
+    font-size:10px;font-weight:800;color:var(--text3);
+  }
+
+  .card-icon {
+    width:50px;height:50px;border-radius:15px;
+    background:var(--ci,var(--green-lt));
+    border:1px solid var(--cb,rgba(13,43,31,0.1));
+    display:flex;align-items:center;justify-content:center;
+    font-size:22px;
+    transition:transform 0.3s cubic-bezier(.34,1.56,.64,1);
+    flex-shrink:0;
+  }
+  .card:hover .card-icon { transform:scale(1.12) rotate(-6deg); }
+
+  .card-cat {
+    font-size:11px;font-weight:800;letter-spacing:0.13em;text-transform:uppercase;
+    color:var(--ca);display:flex;align-items:center;gap:6px;
+  }
+  .card-cat::before { content:'';width:14px;height:2px;background:var(--ca);display:block; }
+
+  .card-title { font-size:20px;font-weight:800;letter-spacing:-0.03em;line-height:1.15;margin-top:2px; }
+  .card-desc  { font-size:12.5px;font-weight:400;color:var(--text2);line-height:1.7;flex:1; }
+
+  .card-tags { display:flex;flex-wrap:wrap;gap:5px; }
+  .tag {
+    font-size:10px;font-weight:700;padding:3.5px 9px;border-radius:20px;
+    background:var(--bg2);color:var(--text2);border:1px solid rgba(13,43,31,0.08);
+  }
+
+  .card-cta {
+    display:flex;align-items:center;justify-content:space-between;
+    padding:11px 14px;border-radius:var(--r-sm);
+    background:var(--ci,var(--green-lt));
+    border:1px solid var(--cb,rgba(13,43,31,0.1));
+    font-size:12.5px;font-weight:800;letter-spacing:0.02em;
+    color:var(--ca);
+    transition:background 0.2s,color 0.2s,border-color 0.2s;
+    margin-top:auto;
+  }
+  .card:hover .card-cta { background:var(--ca);color:#fff;border-color:var(--ca); }
+  .arr { font-size:15px;transition:transform 0.2s; }
+  .card:hover .arr { transform:translateX(5px); }
+
+  /* ── BOTTOM BAR ── */
+  .bottom-bar {
+    margin:12px 28px 0;
+    background:var(--surface);
+    border:1.5px solid var(--border);
+    border-radius:var(--r-sm);
+    box-shadow:var(--shadow);
+    padding:10px 22px;
+    display:flex;align-items:center;justify-content:space-between;
+    opacity:0;transform:translateY(7px);
+    animation:fadeUp 0.45s ease 1s forwards;
+  }
+  .stat .val { font-size:17px;font-weight:800;letter-spacing:-0.025em; }
+  .stat .lbl { font-size:9.5px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;margin-top:1px; }
+  .div { width:1px;height:26px;background:var(--border); }
+  .note { font-size:11px;font-weight:500;color:var(--text3);font-style:italic;line-height:1.5;text-align:right;max-width:260px; }
+
+  /* ── RIPPLE ── */
+  .ripple { position:absolute;border-radius:50%;pointer-events:none;
+    background:rgba(13,43,31,0.07);transform:scale(0);animation:rip 0.55s ease-out forwards; }
+  @keyframes rip { to{transform:scale(5);opacity:0;} }
+
+  /* ── TOOLTIP ── */
+  .tip {
+    position:fixed;bottom:68px;left:50%;
+    transform:translateX(-50%) translateY(5px);
+    background:var(--green);color:#fff;
+    font-size:11px;font-weight:600;
+    padding:7px 16px;border-radius:30px;
+    pointer-events:none;opacity:0;white-space:nowrap;
+    transition:opacity 0.22s,transform 0.22s;
+    box-shadow:0 4px 14px rgba(13,43,31,0.22);z-index:99;
+  }
+  .tip.show { opacity:1;transform:translateX(-50%) translateY(0); }
+
+  @keyframes fadeUp { to{opacity:1;transform:translateY(0);} }
+
+  /* ── Floating leaves ── */
+  .leaf {
+    position:fixed;pointer-events:none;z-index:0;font-size:13px;opacity:0;
+    animation:leafFloat linear infinite;
+  }
+  @keyframes leafFloat {
+    0%   { transform:translateY(100vh) rotate(0deg);opacity:0; }
+    8%   { opacity:0.3; }
+    92%  { opacity:0.15; }
+    100% { transform:translateY(-5vh) rotate(var(--rot));opacity:0; }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="logo-row">
+      <div class="logo-icon">Rx</div>
+      <div class="logo-text">
+        <h1>AI Rx — Administration Suite</h1>
+        <p>Clinical Productivity Tools · NHS UK · 2026</p>
+      </div>
+    </div>
+    <div class="header-right">
+      <span class="pill pill-ghost">RCEM AI Workshop</span>
+      <span class="pill pill-live"><span class="live-dot"></span>Live Demo</span>
+    </div>
+  </header>
+
+  <!-- TITLE ROW -->
+  <div class="title-row">
+    <h2>Your AI Administration Toolkit</h2>
+    <p>Click any card to open the tool in a new tab</p>
+  </div>
+
+  <!-- CARDS -->
+  <div class="grid">
+
+    <!-- 01 Wispr Flow -->
+    <div class="card"
+      style="--ca:#0E7490;--ca2:#06B6D4;--ci:#ECFEFF;--cb:rgba(6,182,212,0.18);"
+      onclick="launch('https://wisprflow.com','Opening Wispr Flow…',this,event)">
+      <div class="card-bar"></div>
+      <div class="card-num">01</div>
+      <div class="card-icon">🎙️</div>
+      <div>
+        <div class="card-cat">Voice AI</div>
+        <div class="card-title">Wispr Flow</div>
+      </div>
+      <div class="card-desc">Dictate emails, referrals and notes on mobile or PC. Speech converts to polished, accurate text wherever you type — no training required.</div>
+      <div class="card-tags">
+        <span class="tag">📱 Mobile</span><span class="tag">💻 PC</span>
+        <span class="tag">Email</span><span class="tag">Dictation</span>
+      </div>
+      <div class="card-cta">Open Wispr Flow <span class="arr">→</span></div>
+    </div>
+
+    <!-- 02 Heidi / Rhazes -->
+    <div class="card"
+      style="--ca:#5B21B6;--ca2:#7C3AED;--ci:#F5F3FF;--cb:rgba(91,33,182,0.16);"
+      onclick="launch('https://www.heidihealth.com','Opening Heidi Health…',this,event)">
+      <div class="card-bar"></div>
+      <div class="card-num">02</div>
+      <div class="card-icon">🩺</div>
+      <div>
+        <div class="card-cat">Ambient Scribe</div>
+        <div class="card-title">Heidi / Rhazes</div>
+      </div>
+      <div class="card-desc">Listens to your consultation and auto-generates clinic letters and SOAP notes. Clinician reviews before sending. Saves 30–45 min per day.</div>
+      <div class="card-tags">
+        <span class="tag">Consultation</span><span class="tag">Clinic Letters</span><span class="tag">SOAP Notes</span>
+      </div>
+      <div class="card-cta">Open Heidi <span class="arr">→</span></div>
+    </div>
+
+    <!-- 03 Eolas -->
+    <div class="card"
+      style="--ca:#065F46;--ca2:#059669;--ci:#ECFDF5;--cb:rgba(5,150,105,0.18);"
+      onclick="launch('https://www.eolasmedical.com','Opening Eolas Medical…',this,event)">
+      <div class="card-bar"></div>
+      <div class="card-num">03</div>
+      <div class="card-icon">🔬</div>
+      <div>
+        <div class="card-cat">Clinical Knowledge</div>
+        <div class="card-title">Eolas Medical</div>
+      </div>
+      <div class="card-desc">Instant microbiology, trust protocols and clinical Q&A — validated to your local guidelines. Any clinical question answered in seconds.</div>
+      <div class="card-tags">
+        <span class="tag">Microbiology</span><span class="tag">Guidelines</span><span class="tag">Protocols</span>
+      </div>
+      <div class="card-cta">Open Eolas <span class="arr">→</span></div>
+    </div>
+
+    <!-- 04 Claude -->
+    <div class="card"
+      style="--ca:#92400E;--ca2:#D97706;--ci:#FFFBEB;--cb:rgba(217,119,6,0.18);"
+      onclick="launch('https://claude.ai','Opening Claude AI…',this,event)">
+      <div class="card-bar"></div>
+      <div class="card-num">04</div>
+      <div class="card-icon">🤖</div>
+      <div>
+        <div class="card-cat">AI Assistant</div>
+        <div class="card-title">Claude AI</div>
+      </div>
+      <div class="card-desc">Research, write PPTs, manage projects, build apps and draft policies. Your smartest clinical colleague — available 24 hours a day, 7 days a week.</div>
+      <div class="card-tags">
+        <span class="tag">Research</span><span class="tag">PPT</span><span class="tag">Build Apps</span><span class="tag">Projects</span>
+      </div>
+      <div class="card-cta">Open Claude <span class="arr">→</span></div>
+    </div>
+
+    <!-- 05 Gamma -->
+    <div class="card"
+      style="--ca:#9D174D;--ca2:#DB2777;--ci:#FFF1F2;--cb:rgba(219,39,119,0.16);"
+      onclick="launch('https://gamma.app','Opening Gamma…',this,event)">
+      <div class="card-bar"></div>
+      <div class="card-num">05</div>
+      <div class="card-icon">✨</div>
+      <div>
+        <div class="card-cat">Presentations</div>
+        <div class="card-title">Gamma</div>
+      </div>
+      <div class="card-desc">Turn a prompt into a beautiful presentation, document or webpage in minutes. No design skills needed — used by over 10 million professionals globally.</div>
+      <div class="card-tags">
+        <span class="tag">Slides</span><span class="tag">Docs</span><span class="tag">Web Pages</span><span class="tag">AI Design</span>
+      </div>
+      <div class="card-cta">Open Gamma <span class="arr">→</span></div>
+    </div>
+
+  </div>
+
+  <!-- BOTTOM BAR -->
+  <div class="bottom-bar">
+    <div class="stat">
+      <div class="val">5 Tools</div>
+      <div class="lbl">In this suite</div>
+    </div>
+    <div class="div"></div>
+    <div class="stat">
+      <div class="val" id="cv" style="color:#0E7490;">0 min</div>
+      <div class="lbl">Saved per day</div>
+    </div>
+    <div class="div"></div>
+    <div class="stat">
+      <div class="val" style="color:#5B21B6;">Free / Freemium</div>
+      <div class="lbl">Access model</div>
+    </div>
+    <div class="div"></div>
+    <div class="stat">
+      <div class="val" style="color:#065F46;">NHS-aware</div>
+      <div class="lbl">Design context</div>
+    </div>
+    <div class="div"></div>
+    <div class="note">All tools require IG governance review before NHS clinical use<br>Dr Abid Nisar · Emergency Medicine Consultant · UHBW</div>
+  </div>
+
+</div>
+
+<div class="tip" id="tip"></div>
+
+<script>
+  /* Staggered card entrance */
+  document.querySelectorAll('.card').forEach((c, i) =>
+    setTimeout(() => c.classList.add('in'), 280 + i * 105)
+  );
+
+  /* Counter */
+  let v = 0; const cv = document.getElementById('cv');
+  const tick = () => { if (v < 47) { v++; cv.textContent = v + ' min'; requestAnimationFrame(tick); } };
+  setTimeout(tick, 500);
+
+  /* Ripple */
+  function ripple(e, card) {
+    const r = card.getBoundingClientRect();
+    const el = document.createElement('div');
+    el.className = 'ripple';
+    const sz = Math.max(r.width, r.height) * 1.6;
+    el.style.cssText = `width:${sz}px;height:${sz}px;left:${e.clientX-r.left-sz/2}px;top:${e.clientY-r.top-sz/2}px;`;
+    card.appendChild(el);
+    setTimeout(() => el.remove(), 650);
+  }
+
+  /* Tip */
+  const tip = document.getElementById('tip');
+  function showTip(msg) {
+    tip.textContent = msg; tip.classList.add('show');
+    setTimeout(() => tip.classList.remove('show'), 2200);
+  }
+
+  /* Launch */
+  function launch(url, msg, card, e) {
+    ripple(e, card);
+    showTip('🚀 ' + msg);
+    setTimeout(() => window.open(url, '_blank'), 200);
+  }
+
+  /* 3D tilt */
+  document.querySelectorAll('.card').forEach(card => {
+    card.addEventListener('mousemove', e => {
+      const r = card.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width  - 0.5;
+      const y = (e.clientY - r.top)  / r.height - 0.5;
+      card.style.transform = `translateY(-6px) scale(1.018) rotateX(${-y*5}deg) rotateY(${x*5}deg)`;
+    });
+    card.addEventListener('mouseleave', () => card.style.transform = '');
+  });
+
+  /* Floating leaves */
+  const leaves = ['🌿','🍃','🌱'];
+  function leaf() {
+    const el = document.createElement('div');
+    el.className = 'leaf';
+    el.textContent = leaves[Math.floor(Math.random()*leaves.length)];
+    const dur = 14 + Math.random()*10;
+    el.style.cssText = `left:${Math.random()*100}vw;bottom:-20px;--rot:${(Math.random()-.5)*380}deg;animation-duration:${dur}s;animation-delay:${Math.random()*2}s;`;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), (dur+4)*1000);
+  }
+  for (let i=0;i<6;i++) setTimeout(leaf, i*900);
+  setInterval(leaf, 4000);
+</script>
+</body>
+</html>
